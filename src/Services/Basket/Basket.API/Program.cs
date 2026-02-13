@@ -4,6 +4,7 @@ using Carter;
 using Serilog;
 using FluentValidation;
 using Scalar.AspNetCore;
+using BuildingBlocks.Resilience;
 
 // --- Serilog Bootstrap Logger ---
 Log.Logger = new LoggerConfiguration()
@@ -43,8 +44,24 @@ try
         };
     });
 
-    // --- Repository ---
+    // --- Resilience Pipeline ---
+    // Redis çağrıları için: Retry (3x exponential) + Circuit Breaker + Timeout
+    builder.Services.AddDefaultResiliencePipeline("redis-pipeline", options =>
+    {
+        options.MaxRetryAttempts = 3;
+        options.RetryBaseDelay = TimeSpan.FromMilliseconds(300);
+        options.PerAttemptTimeout = TimeSpan.FromSeconds(3);
+        options.TotalTimeout = TimeSpan.FromSeconds(15);
+        options.CircuitBreakerFailureRatio = 0.5;
+        options.CircuitBreakerBreakDuration = TimeSpan.FromSeconds(15);
+    });
+
+    // --- Repository + Decorator (Scrutor) ---
+    // 1. İlk olarak BasketRepository register edilir
+    // 2. Scrutor Decorate ile CachedBasketRepository sarmalanır
+    // DI resolve sırası: Handler → CachedBasketRepository → BasketRepository
     builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+    builder.Services.Decorate<IBasketRepository, CachedBasketRepository>();
 
     // --- MediatR + Pipeline Behaviors ---
     builder.Services.AddMediatR(config =>

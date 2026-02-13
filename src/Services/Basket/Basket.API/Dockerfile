@@ -7,8 +7,8 @@ WORKDIR /src
 # 1) Solution seviyesinde .csproj'ları kopyala — layer caching için
 COPY src/BuildingBlocks/BuildingBlocks.Results/BuildingBlocks.Results.csproj BuildingBlocks/BuildingBlocks.Results/
 COPY src/BuildingBlocks/BuildingBlocks.CQRS/BuildingBlocks.CQRS.csproj BuildingBlocks/BuildingBlocks.CQRS/
+COPY src/BuildingBlocks/BuildingBlocks.Resilience/BuildingBlocks.Resilience.csproj BuildingBlocks/BuildingBlocks.Resilience/
 COPY src/Services/Basket/Basket.API/Basket.API.csproj Services/Basket/Basket.API/
-
 # 2) Restore — NuGet paketleri cache'lenir
 RUN dotnet restore Services/Basket/Basket.API/Basket.API.csproj
 
