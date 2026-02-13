@@ -1,14 +1,15 @@
+// src/BuildingBlocks/BuildingBlocks.Results/Result.cs
+
 namespace BuildingBlocks.Results;
 
 /// <summary>
 /// Değer döndürmeyen işlemler için Result.
 /// Örnek: DeleteProduct → Result (başarılı mı, değil mi?)
 /// </summary>
-public class Result
+public class Result : IResultBase
 {
     protected Result(bool isSuccess, Error error)
     {
-        // Invariant: Success ise error None olmalı, Failure ise error olmamalı None
         if (isSuccess && error != Error.None)
             throw new InvalidOperationException("Success result cannot have an error.");
         if (!isSuccess && error == Error.None)
@@ -25,7 +26,6 @@ public class Result
     public static Result Success() => new(true, Error.None);
     public static Result Failure(Error error) => new(false, error);
 
-    // Implicit conversion — Error'dan otomatik Failure Result oluştur
     public static implicit operator Result(Error error) => Failure(error);
 }
 
@@ -51,7 +51,6 @@ public class Result<T> : Result
     public static Result<T> Success(T value) => new(value);
     public new static Result<T> Failure(Error error) => new(error);
 
-    // Implicit conversions — temiz kullanım için
     public static implicit operator Result<T>(T value) => Success(value);
     public static implicit operator Result<T>(Error error) => Failure(error);
 }

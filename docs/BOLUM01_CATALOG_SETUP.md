@@ -777,3 +777,168 @@ sota-eshop-microservices/
 ---
 
 > **Versiyon:** 1.0 | **Son Güncelleme:** 2025-02-12
+
+## Bölüm 1 — TODO Tamamlama Notları
+
+> Bu notları `BOLUM01_CATALOG_SETUP.md`'nin ilgili bölümlerine ekle.
+
+---
+
+### TODO 1: Marten Log Seviyesi ✅
+
+`appsettings.Development.json`'da Serilog override'ları eklendi:
+
+```json
+"Override": {
+    "Microsoft": "Warning",
+    "Microsoft.AspNetCore": "Warning",
+    "Marten": "Warning",
+    "Npgsql": "Warning"
+}
+```
+
+**Etki:** Marten'ın verbose schema SQL logları artık görünmüyor. Sadece `Warning` ve üstü loglanıyor.
+
+---
+
+### TODO 2: Seq ⏭️ (Ertelendi)
+
+Seq container'ı (`datalust/seq`) WSL2 + Docker Desktop ortamında crash ediyor. 2024.3 ve 2023.4 versiyonları da aynı sorunu verdi (Autofac resolution hatası). 
+
+**Karar:** Seq, Bölüm 8 (Observability Stack) ile birlikte Prometheus + Grafana kurulurken tekrar denenecek. Şu an **Serilog Console sink** yeterli.
+
+**appsettings'ten Seq sink kaldırıldı**, `Serilog.Sinks.Seq` paketi projede kalabilir (ileride kullanılacak).
+
+---
+
+### TODO 3: Health Check — PostgreSQL Kontrolü ✅
+
+**Eklenen Paket:**
+```bash
+dotnet add src/Services/Catalog/Catalog.API/ package AspNetCore.HealthChecks.NpgSql
+```
+
+**Program.cs Değişiklikleri:**
+
+1. Using eklendi:
+```csharp
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+```
+
+2. DI registration (AddCarter'dan sonra):
+```csharp
+// --- Health Checks ---
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("Database") 
+        ?? throw new InvalidOperationException("Database connection string is required for health check."));
+```
+
+3. Eski basit endpoint kaldırıldı, ASP.NET Health Checks middleware eklendi:
+```csharp
+// Eski: app.MapGet("/health", () => Results.Ok(new { Status = "Healthy" }));
+// Yeni:
+app.MapHealthChecks("/health");
+```
+
+**Fark:** Artık `/health` endpoint'i sadece "Healthy" demekle kalmıyor, PostgreSQL bağlantısını da kontrol ediyor. DB çökerse `Unhealthy` döner.
+
+**Test:** `curl -s http://localhost:5001/health` → `Healthy`
+
+---
+
+### TODO 4: launchSettings.json Port Standardizasyonu ✅
+
+Port `5001` olarak sabitlendi (Master Plan ile uyumlu):
+
+```json
+// src/Services/Catalog/Catalog.API/Properties/launchSettings.json
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+```
+
+**Port Mapping Tablosu (Master Plan):**
+| Servis | Port |
+|--------|------|
+| Catalog.API | 5001 |
+| Basket.API | 5002 |
+| Discount.Grpc | 5003 |
+| Ordering.API | 5004 |
+| YARP Gateway | 5000 |
+
+---
+
+### TODO 5: .gitignore ✅
+
+```
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.pdb
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+## Docker volumes
+docker/*-data/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+
+## NuGet
+packages/
+*.nupkg
+```
+
+---
+
+### TODO 6: Git Init + İlk Commit + Push ✅
+
+```bash
+git init
+git add .
+git commit -m "Bölüm 1: Catalog.API iskelet + BuildingBlocks (Result pattern, CQRS abstractions, Marten, Carter, Serilog)"
+git remote add origin https://github.com/hmztplinv/sota-msc.git
+git push -u origin main
+```
+
+**Strateji:** Her bölüm sonunda commit + push yapılacak. Commit mesajı: `"Bölüm X: [kısa açıklama]"`
+
+---
+
+### TARTIŞMA: Marten 8.x Versiyon Pinleme ✅ (Açıklama)
+
+Bölüm 1'de 3 breaking change yaşandı:
+
+| Sorun | Eski API | Yeni API (Marten 8.x) |
+|-------|----------|----------------------|
+| AutoCreate namespace | `Weasel.Core.AutoCreate` | `JasperFx.AutoCreate` |
+| Store() parametresi | `IReadOnlyList<T>` kabul ederdi | Sadece `T[]` (array) kabul ediyor |
+| DB oluşturma | `CreateDatabasesForTenants()` | API kaldırıldı → Docker init script |
+
+**Versiyon Pinleme Stratejisi:** NuGet'te `.csproj` dosyasında sabit versiyon belirtiyoruz (örn: `Marten 8.21.0`). `dotnet add package` her zaman en son uyumlu versiyonu çeker ve pinler. Bilinçli upgrade yapmadan versiyon değişmez. Bu strateji zaten uygulanıyor — ek aksiyon gerekmiyor.
+
+---
+
+> **Bölüm 1 tamamen tamamlandı. Sonraki session: Bölüm 2 — Vertical Slice + CQRS Handlers**

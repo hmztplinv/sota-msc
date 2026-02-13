@@ -3,6 +3,7 @@ using Catalog.API.Data;
 using Carter;
 using Marten;
 using Serilog;
+using FluentValidation;
 
 // --- Serilog Bootstrap Logger ---
 // Uygulama ayağa kalkarken oluşan hataları yakalamak için early logger
@@ -41,8 +42,22 @@ try
 
     // --- MediatR ---
     // CQRS handler'ları otomatik register et (bu assembly'deki tüm IRequestHandler'lar)
+    // --- MediatR + Pipeline Behaviors ---
+    // CQRS handler'ları otomatik register et (bu assembly'deki tüm IRequestHandler'lar)
     builder.Services.AddMediatR(config =>
-        config.RegisterServicesFromAssembly(typeof(Program).Assembly));
+    {
+        config.RegisterServicesFromAssembly(typeof(Program).Assembly);
+
+        // Pipeline Behaviors — her request'te sırayla çalışır:
+        // 1) Logging → request başlangıç/bitiş + süre ölçümü
+        // 2) Validation → FluentValidation rules, handler'a ulaşmadan önce kontrol
+        config.AddOpenBehavior(typeof(BuildingBlocks.CQRS.Behaviors.LoggingBehavior<,>));
+        config.AddOpenBehavior(typeof(BuildingBlocks.CQRS.Behaviors.ValidationBehavior<,>));
+    });
+
+    // --- FluentValidation ---
+    // Bu assembly'deki tüm AbstractValidator<T>'leri otomatik register et
+    builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
     // --- Carter ---
     // Minimal API endpoint modüllerini otomatik keşfet ve register et
