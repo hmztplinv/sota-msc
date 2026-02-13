@@ -1,6 +1,7 @@
 // src/Services/Catalog/Catalog.API/Features/UpdateProduct/UpdateProductEndpoint.cs
 
 using Carter;
+using Mapster;
 using MediatR;
 
 namespace Catalog.API.Features.UpdateProduct;
@@ -22,13 +23,8 @@ public sealed class UpdateProductEndpoint : ICarterModule
             UpdateProductRequest request,
             ISender sender) =>
         {
-            var command = new UpdateProductCommand(
-                id,
-                request.Name,
-                request.Categories,
-                request.Description,
-                request.ImageFile,
-                request.Price);
+            var command = request.Adapt<UpdateProductCommand>() with { Id = id };
+
 
             var result = await sender.Send(command);
 

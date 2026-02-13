@@ -12,6 +12,7 @@ public sealed record Error(string Code, string Message, ErrorType Type = ErrorTy
     public static Error Validation(string code, string message) => new(code, message, ErrorType.Validation);
     public static Error Conflict(string code, string message) => new(code, message, ErrorType.Conflict);
     public static Error Unauthorized(string code, string message) => new(code, message, ErrorType.Unauthorized);
+    public static Error Unexpected(string code, string description) => new(code, description, ErrorType.Unexpected);
 
     /// <summary>Hata olmadığını temsil eden sentinel value.</summary>
     public static readonly Error None = new(string.Empty, string.Empty);
@@ -26,5 +27,6 @@ public enum ErrorType
     NotFound = 1,     // 404
     Validation = 2,   // 400
     Conflict = 3,     // 409
-    Unauthorized = 4  // 401
+    Unauthorized = 4,  // 401
+    Unexpected = 5    // 500
 }

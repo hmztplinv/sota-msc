@@ -1,11 +1,9 @@
-// src/Services/Catalog/Catalog.API/Features/CreateProduct/CreateProductEndpoint.cs
-
 using Carter;
+using Mapster;
 using MediatR;
 
 namespace Catalog.API.Features.CreateProduct;
 
-// --- API Request DTO ---
 public sealed record CreateProductRequest(
     string Name,
     List<string> Categories,
@@ -19,12 +17,8 @@ public sealed class CreateProductEndpoint : ICarterModule
     {
         app.MapPost("/api/products", async (CreateProductRequest request, ISender sender) =>
         {
-            var command = new CreateProductCommand(
-                request.Name,
-                request.Categories,
-                request.Description,
-                request.ImageFile,
-                request.Price);
+            // Mapster — property isimleri eşleştiği için zero-config
+            var command = request.Adapt<CreateProductCommand>();
 
             var result = await sender.Send(command);
 
