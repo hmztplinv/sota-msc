@@ -56,6 +56,24 @@ try
         options.CircuitBreakerBreakDuration = TimeSpan.FromSeconds(15);
     });
 
+
+    // --- gRPC Client: Discount Service ---
+    builder.Services.AddGrpcClient<Discount.Grpc.DiscountProtoService.DiscountProtoServiceClient>(options =>
+    {
+        options.Address = new Uri(builder.Configuration["GrpcSettings:DiscountUrl"]
+            ?? throw new InvalidOperationException("Discount gRPC URL is required."));
+    })
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        // Development: HTTP/2 cleartext (h2c) — TLS olmadan gRPC
+        // Production'da bu handler KALDIRILMALI, gerçek TLS sertifikası kullanılmalı
+        return new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+    });
+
     // --- Repository + Decorator (Scrutor) ---
     // 1. İlk olarak BasketRepository register edilir
     // 2. Scrutor Decorate ile CachedBasketRepository sarmalanır

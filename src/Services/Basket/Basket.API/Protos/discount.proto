@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+option csharp_namespace = "Discount.Grpc";
+
+package discount;
+
+// Discount gRPC Service — Coupon CRUD operations
+service DiscountProtoService {
+  // Coupon sorgulama
+  rpc GetDiscount (GetDiscountRequest) returns (CouponModel);
+  
+  // Coupon oluşturma
+  rpc CreateDiscount (CreateDiscountRequest) returns (CouponModel);
+  
+  // Coupon güncelleme
+  rpc UpdateDiscount (UpdateDiscountRequest) returns (CouponModel);
+  
+  // Coupon silme
+  rpc DeleteDiscount (DeleteDiscountRequest) returns (DeleteDiscountResponse);
+}
+
+// === Request Messages ===
+
+message GetDiscountRequest {
+  string product_name = 1;   // Ürün adına göre indirim sorgula
+}
+
+message CreateDiscountRequest {
+  string product_name = 1;
+  string description = 2;
+  int32 amount = 3;          // İndirim tutarı (integer — cent/kuruş)
+}
+
+message UpdateDiscountRequest {
+  int32 id = 1;
+  string product_name = 2;
+  string description = 3;
+  int32 amount = 4;
+}
+
+message DeleteDiscountRequest {
+  string product_name = 1;
+}
+
+// === Response Messages ===
+
+message CouponModel {
+  int32 id = 1;
+  string product_name = 2;
+  string description = 3;
+  int32 amount = 4;
+}
+
+message DeleteDiscountResponse {
+  bool success = 1;
+}

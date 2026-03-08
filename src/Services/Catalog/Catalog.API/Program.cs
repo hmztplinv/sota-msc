@@ -38,7 +38,7 @@ try
         if (builder.Environment.IsDevelopment())
             options.AutoCreateSchemaObjects = JasperFx.AutoCreate.All;
 
-        }).InitializeWith<CatalogInitialData>().UseLightweightSessions(); // Lightweight session — performans için yeterli, Unit of Work gerektirmiyoruz
+    }).InitializeWith<CatalogInitialData>().UseLightweightSessions(); // Lightweight session — performans için yeterli, Unit of Work gerektirmiyoruz
 
     // --- MediatR ---
     // CQRS handler'ları otomatik register et (bu assembly'deki tüm IRequestHandler'lar)

@@ -25,6 +25,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapGrpcReflectionService();
 }
+app.MapGet("/health", () => Results.Ok("Healthy"));
 
 app.MapGet("/", () => "Discount gRPC Service is running.");
 
